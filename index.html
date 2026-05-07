@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evenora | Movie Box</title>
+    <style>
+        :root { --bg-dark-blue: #020813; --neon-blue: #00F0FF; --golden-yellow: #FFD700; --neon-red: #FF003C; --text-light: #E0EFFF; --glass-bg: rgba(0, 240, 255, 0.05); --glass-border: rgba(0, 240, 255, 0.2); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-dark-blue); color: var(--text-light); min-height: 100vh; }
+        header { background: rgba(2, 8, 19, 0.9); backdrop-filter: blur(15px); border-bottom: 1px solid var(--neon-blue); padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 24px; font-weight: 900; letter-spacing: 5px; }
+        .logo span { color: var(--neon-red); }
+        nav ul { list-style: none; display: flex; gap: 10px; }
+        nav ul li { cursor: pointer; padding: 8px 12px; font-size: 11px; text-transform: uppercase; border: 1px solid transparent; border-radius: 20px; transition: 0.3s; }
+        nav ul li.active { border-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); color: var(--neon-blue); }
+        main { padding: 30px 5%; }
+        .section-title { margin-bottom: 30px; font-size: 20px; border-left: 5px solid var(--neon-red); padding-left: 15px; text-transform: uppercase; }
+        .movies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+        .movie-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 10px; overflow: hidden; transition: 0.4s; position: relative; cursor: pointer; }
+        .movie-card:hover { transform: translateY(-5px); border-color: var(--neon-blue); }
+        .movie-cover { width: 100%; height: 240px; object-fit: cover; }
+        .movie-info { padding: 10px; }
+        .movie-title { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vip-badge { position: absolute; top: 10px; right: 10px; background: var(--golden-yellow); color: black; font-size: 9px; padding: 3px 7px; border-radius: 4px; font-weight: bold; }
+        
+        /* Search Bar Style */
+        .search-container { padding: 0 5%; margin-top: 20px; }
+        .search-input { width: 100%; padding: 12px 20px; background: rgba(0, 240, 255, 0.05); border: 1px solid var(--neon-blue); border-radius: 25px; color: white; outline: none; transition: 0.3s; }
+        .search-input:focus { box-shadow: 0 0 15px var(--neon-blue); background: rgba(0, 240, 255, 0.1); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: #060b14; border: 1px solid var(--neon-blue); width: 95%; max-width: 600px; border-radius: 15px; overflow: hidden; position: relative; }
+        .slider-track { display: flex; width: 200%; transition: transform 0.4s ease-in-out; }
+        .slide-pane { width: 50%; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; border-radius: 8px; overflow: hidden; background: #000; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .btn { padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; text-transform: uppercase; text-align: center; text-decoration: none; }
+        .btn-blue { background: var(--neon-blue); color: #000; }
+        .btn-gold { background: var(--golden-yellow); color: #000; margin-top: 10px; }
+        .btn-whatsapp { background: #25D366; color: #fff; }
+        .ticket-input { width: 100%; padding: 12px; background: #000; border: 1px solid var(--neon-blue); color: var(--golden-yellow); text-align: center; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">EVEN<span>ORA</span></div>
+        <nav>
+            <ul id="category-list">
+                <li class="active" data-cat="All">All</li>
+                <li data-cat="VIP">VIP</li>
+                <li data-cat="Action">Action</li>
+                <li data-cat="Fantasy">Fantasy</li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search for a movie title...">
+    </div>
+
+    <main>
+        <h2 class="section-title" id="display-title">All Content</h2>
+        <div class="movies-grid" id="movies-grid"></div>
+    </main>
+
+    <div class="modal-overlay" id="movieModal">
+        <div class="modal-content">
+            <div class="slider-track" id="sliderTrack">
+                <div class="slide-pane">
+                    <h3 id="modalTitle" style="color: var(--neon-blue);"></h3>
+                    <div class="video-container">
+                        <iframe id="trailerIframe" src="" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <div id="modalDescription" style="font-size: 13px; color: #ccc;"></div>
+                    <button class="btn btn-blue" onclick="slideModal('right')">Get Full Movie ➔</button>
+                    <button class="btn" style="background:#333; color:white;" onclick="closeModal()">Close</button>
+                </div>
+                <div class="slide-pane" style="text-align: center;">
+                    <img id="modalCover" src="" style="width: 100px; border-radius: 8px; margin: 0 auto;">
+                    <h3 id="modalFullTitle"></h3>
+                    <p id="vipNotice" style="color: var(--neon-red);"></p>
+                    <div id="ticketArea">
+                        <input type="text" id="ticketInput" class="ticket-input" placeholder="Enter Ticket Code">
+                        <button class="btn btn-blue" style="width:100%" onclick="verifyTicket()">Verify Ticket 🎟️</button>
+                        <a id="whatsappLink" href="#" target="_blank" class="btn btn-whatsapp" style="display: block; margin-top: 10px;">Get Ticket via WhatsApp 💬</a>
+                    </div>
+                    <a id="downloadLink" href="#" target="_blank" class="btn btn-gold" style="display: none; width: 100%;">⏬ Download Full Movie</a>
+                    <button class="btn" style="margin-top:20px; background:#333; color:white;" onclick="slideModal('left')">⬅ Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+
+    <script>
+        let currentMovie = null;
+
+        // HATUA YA 2: KUULIZA MASWALI (FETCHING)
+        async function loadMovies(filter = "All") {
+            const grid = document.getElementById('movies-grid');
+            grid.innerHTML = "<p style='color: var(--neon-blue);'>Loading movies...</p>";
+
+            let query = db.from('movie').select('*');
+            if (filter !== "All") query = query.eq('category', filter);
+
+            const { data: movies, error } = await query.order('id', { ascending: false });
+
+            if (error) {
+                grid.innerHTML = `<p style='color: var(--neon-red);'>Error: ${error.message}</p>`;
+                return;
+            }
+
+            // HATUA YA 3: KUPANGA BIDHAA (RENDERING)
+            grid.innerHTML = "";
+            movies.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.innerHTML = `
+                    ${movie.category === 'VIP' ? `<div class="vip-badge">VIP - ${movie.price}/=</div>` : ''}
+                    <img src="${movie.coverPhoto}" class="movie-cover" alt="${movie.title}">
+                    <div class="movie-info">
+                        <div class="movie-title">${movie.title}</div>
+                        <div style="font-size:10px; color:var(--neon-blue)">${movie.category}</div>
+                    </div>`;
+                card.onclick = () => openModal(movie);
+                grid.appendChild(card);
+            });
+        }
+
+        // --- SEARCH ENGINE ---
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const movieCards = document.querySelectorAll('.movie-card');
+
+            movieCards.forEach(card => {
+                const title = card.querySelector('.movie-title').innerText.toLowerCase();
+                if (title.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // --- MODAL LOGIC ---
+        function openModal(movie) {
+            currentMovie = movie;
+            document.getElementById('modalTitle').innerText = movie.title;
+            document.getElementById('modalFullTitle').innerText = movie.title;
+            document.getElementById('modalCover').src = movie.coverPhoto;
+            document.getElementById('modalDescription').innerText = movie.caption;
+            document.getElementById('downloadLink').href = movie.source;
+
+            let vidId = "";
+            if (movie.trailerSource.includes('v=')) {
+                vidId = movie.trailerSource.split('v=')[1].split('&')[0];
+            } else {
+                vidId = movie.trailerSource.split('/').pop();
+            }
+            document.getElementById('trailerIframe').src = `https://www.youtube.com/embed/${vidId}`;
+
+            if(movie.category === 'VIP') {
+                document.getElementById('vipNotice').innerText = `Price: Tsh ${movie.price}/=`;
+                document.getElementById('ticketArea').style.display = 'block';
+                document.getElementById('downloadLink').style.display = 'none';
+                document.getElementById('whatsappLink').href = `https://wa.me/255673466647?text=Nahitaji Tiketi ya: ${movie.title}`;
+            } else {
+                document.getElementById('vipNotice').innerText = "FREE MOVIE";
+                document.getElementById('ticketArea').style.display = 'none';
+                document.getElementById('downloadLink').style.display = 'block';
+            }
+            document.getElementById('movieModal').style.display = 'flex';
+        }
+
+        function slideModal(dir) { 
+            document.getElementById('sliderTrack').style.transform = dir === 'right' ? 'translateX(-50%)' : 'translateX(0)'; 
+        }
+
+        function closeModal() { 
+            document.getElementById('movieModal').style.display = 'none'; 
+            document.getElementById('trailerIframe').src = ''; 
+        }
+
+        // --- TICKET VERIFICATION ---
+        async function verifyTicket() {
+            const inputCode = document.getElementById('ticketInput').value.trim();
+            if(!inputCode) return alert("Weka kodi kwanza!");
+
+            const { data, error } = await db.from('tickets')
+                .select('*')
+                .eq('code', inputCode)
+                .eq('status', 'active')
+                .single();
+
+            if (data) {
+                alert("Tiketi Imekubali! Furahia Movie.");
+                document.getElementById('ticketArea').style.display = 'none';
+                document.getElementById('downloadLink').style.display = 'block';
+            } else {
+                alert("Kodi Sio Sahihi au Imetumika!");
+            }
+        }
+        
+        document.querySelectorAll('#category-list li').forEach(li => {
+            li.addEventListener('click', () => {
+                document.querySelector('#category-list li.active').classList.remove('active');
+                li.classList.add('active');
+                document.getElementById('display-title').innerText = li.dataset.cat + " Content";
+                loadMovies(li.dataset.cat);
+            });
+        });
+
+        window.onload = () => loadMovies();
+    </script>
+</body>
+</html>
